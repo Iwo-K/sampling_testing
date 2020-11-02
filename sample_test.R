@@ -60,10 +60,22 @@ realreads = rep(names(realreads), times = realreads)
 realcounts = count_reads(realreads)
 realtest = sim_sampling(realreads, simno = 20)
 
-#' ## Simualating library splitting
 
-#' Still needs to solve the no replacement things
-#' I think it's negligible because the original library is massive and only a small fraction gets sequenced
+a = sample(reads, 1000)
+a2 = count_reads(a, names = unique(reads))
+
+gz = count_reads(reads)
+set.seed(123)
+b = sample(row.names(gz), size = 1000, prob = gz$count/sum(gz$count))
+b = count_reads(b, names=  unique(reads))
+
+head(a2)
+head(b)
+sum(a2$count)
+sum(b$count)
+
+
+
 sim_splitting = function(reads, ref = 10000, splits = c(5000,5000), simno = 100, remove_reads = TRUE){
 
   if (sum(splits) != ref){
@@ -105,22 +117,8 @@ sim_splitting = function(reads, ref = 10000, splits = c(5000,5000), simno = 100,
   }
   return(list(ref = dfref, split = dfsplit))
 }
-z = sim_splitting(reads, ref = 10000, splits = c(5000,5000))
-plot(rowMeans(z$ref), rowMeans(z$split))
 
-set.seed(123)
-a = sample(reads, 1000)
-a2 = count_reads(a, names = unique(reads))
 
-gz = count_reads(reads)
-set.seed(123)
-b = sample(row.names(gz), size = 1000, prob = gz$count/sum(gz$count))
-b = count_reads(b, names=  unique(reads))
-
-head(a2)
-head(b)
-sum(a2$count)
-sum(b$count)
 
 
 gz = function(){
