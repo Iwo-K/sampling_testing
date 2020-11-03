@@ -150,7 +150,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 
 ##' Sample from a counttable.. content for \description{} (no empty lines) ..
 ##'
-##' .. content for \details{} ..
+##' Sample from a count data.frame
 ##' @title 
 ##' @param x a data.frame with row.names and corresponding counts stored in a single column ("count")
 ##' @param size 
@@ -165,9 +165,9 @@ sample_counts = function(x, size = 1000){
 }
 ##' Simulation splitting libraries for sequencing
 ##'
-##' .. content for \details{} ..
+##' Takes in a counts dataframe, samples ref number of reads - simno number of times and then performs the same for splits but pooling each one of them. remove_reads allows removing reads from the library after each split. Outputs a list of dataframes, one for ref and one for splits (pooled together).
 ##' @title 
-##' @param counts 
+##' @param counts data.frame with names of reads in row.names and counts in count column
 ##' @param ref 
 ##' @param splits 
 ##' @param simno 
