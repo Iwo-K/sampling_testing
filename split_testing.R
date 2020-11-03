@@ -60,14 +60,15 @@ sim_splitting = function(counts, ref = 10000, splits = c(5000,5000),
     #' Simulating the split + pool
     df = data.frame(row.names = reads_uniq)
     for (j in splits){
-      print(sum(counts_temp$count))
-      #This part needs fixing so that it removes the previous splits!
-      ## if (remove_reads){
-      ##   counts_temp = counts - refx[,simname]
-      ## }
       splitx = sample_counts(counts_temp, size = j)
       splitx = count_reads(splitx, names = reads_uniq)
       df = cbind(df, splitx)
+
+      print(sum(counts_temp$count))
+      if (remove_reads){
+        counts_temp = counts - splitx[,"count"]
+      }
+
     }
     df = data.frame(row.names = reads_uniq, count = rowSums(df))
     colnames(df) = paste0("sim_", as.character(i))
