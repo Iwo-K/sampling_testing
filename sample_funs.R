@@ -14,8 +14,8 @@ simreads = function(nuniq = 10000, n_total = 100000){
   seqs = seqs[1:nuniq]
 
   ns = rnbinom(nuniq, size = 4, mu = 20)
-  print(hist(ns))
-  print(sum(ns))
+  ## print(hist(ns))
+  ## print(sum(ns))
   plot(hist(ns, breaks = 100))
 
   seqs = rep(seqs, times = ns)
@@ -87,7 +87,6 @@ collapse_sampling = function(x, n){
   }
   else{
     group = lapply(as.list(0:(ncol(x)/n-1)), FUN = function(x) 1:n + x*n)
-    print(group)
 
     counter = 1
     for (i in group){
@@ -145,4 +144,94 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
                                       layout.pos.col = matchidx$col))
     }
   }
+}
+
+#' For splitting simulatio
+
+##' Sample from a counttable.. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title 
+##' @param x a data.frame with row.names and corresponding counts stored in a single column ("count")
+##' @param size 
+##' @param cols: Number of columns in layout
+##' @param layout: A matrix specifying the layout. If present, 'cols' is ignored.
+##' @return 
+##' @author Iwo Kucinski
+sample_counts = function(x, size = 1000){
+  x = rep(row.names(x), times = x$count)
+  x = sample(x, size = size)
+  return(x)
+}
+##' Simulation splitting libraries for sequencing
+##'
+##' .. content for \details{} ..
+##' @title 
+##' @param counts 
+##' @param ref 
+##' @param splits 
+##' @param simno 
+##' @param remove_reads 
+##' @param cols: Number of columns in layout
+##' @param layout: A matrix specifying the layout. If present, 'cols' is ignored.
+##' @return 
+##' @author Iwo Kucinski
+sim_splitting = function(counts, ref = 10000, splits = c(5000,5000),
+                         simno = 100,
+                         remove_reads = TRUE,
+                         quiet = TRUE){
+
+  if (sum(splits) != ref){
+    print("Error sum of splits does not equal the ref")
+    stop()
+  }
+  reads_uniq = row.names(counts)
+
+  dfref = data.frame(row.names = reads_uniq)
+  dfsplit = data.frame(row.names = reads_uniq)
+
+  for (i in 1:simno){
+    simname = paste0("sim_", as.character(i))
+    #' Simulating the reference
+    if (!quiet) print(sum(counts$count))
+    refx = sample_counts(counts, size = ref)
+    refx = count_reads(refx, names = reads_uniq)
+    colnames(refx) = simname
+    dfref = cbind(dfref, refx)
+
+    counts_temp = counts
+    #' Simulating the split + pool
+    df = data.frame(row.names = reads_uniq)
+    for (j in splits){
+      splitx = sample_counts(counts_temp, size = j)
+      splitx = count_reads(splitx, names = reads_uniq)
+      df = cbind(df, splitx)
+
+      if (!quiet) print(sum(counts_temp$count))
+      if (remove_reads){
+        counts_temp = counts - splitx[,"count"]
+      }
+
+    }
+    df = data.frame(row.names = reads_uniq, count = rowSums(df))
+    colnames(df) = paste0("sim_", as.character(i))
+    dfsplit = cbind(dfsplit, df)
+  }
+  return(list(ref = dfref, split = dfsplit))
+}
+
+plot_split = function(simsplit){
+                                        #Generating ref x ref comparison (1/2 of simulations)
+  r = simsplit$ref
+  simno = ncol(r)
+  r1 = r[,1:simno/2]
+  r2 = r[,(simno/2):ncol(r)]
+  g1 = ggplot(data.frame(), aes(x = rowMeans(r1), y = rowMeans(r2))) + geom_point(alpha = 0.5)
+
+  s = simsplit$split
+  s1 = s[,1:simno/2]
+  g2 = ggplot(data.frame(), aes(x = rowMeans(r1), rowMeans(s1))) + geom_point(alpha = 0.5)
+
+  multiplot(g1, g2, cols = 2)
+
 }
