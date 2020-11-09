@@ -23,7 +23,7 @@ theme_set(theme_TFpaper)
 reads = simreads(nuniq = 10000, n_total = 100000)
 
 #' Distribution of observed abundances
-hist(table(reads))
+hist(table(reads), breaks = 100)
 
 #' I sample 10000 reads from the population and store each results. I repeat the process 1000 times to get an accurate estimate for the mean observed abundance. We store two such runs x1 and x2 for later comparisons.
 x1 = sim_sampling(reads, sample_size = 10000, simno = 1000)
@@ -57,13 +57,16 @@ row.names(realreads) = realreads$V1
 realreads = realreads[,-1]
 realreads = realreads[,1:100]
 realreads = rowSums(realreads)
+#' Converting the counts into a vector with reads
 realreads = rep(names(realreads), times = realreads)
+#' Taking 10^8 reads
 realreads = sample(realreads, 1e8)
+#' Generating counts again
 realcounts = count_reads(realreads)
 
-#' We have this many reads:
+#' We have this many reads (check):
 sum(realcounts$count)
-#' ### Simualating library splitting
+#' ### Simulating library splitting
 
 #' Finally we can test a scenario mimicking a real sequencing experiment.
 #' 1. We start with a library with 100 mln mln reads (reflecting molecules in a library).
@@ -76,20 +79,27 @@ sum(realcounts$count)
 ## z = sim_splitting(counts, ref = 10000, splits = c(5000,5000), simno =100, remove_reads = TRUE, quiet =FALSE)
 ## ## lapply(z, head)
 ## #+ fig.width = 14
-## plot_split(z)
+## plot_split_mean(z)
+## plot_split_var(z)
 
 realsplit = sim_splitting(realcounts, ref = 1e7, splits = c(5e6, 5e6), simno = 100, remove_reads = TRUE)
 realsplit = lapply(realsplit, FUN = function(x) log10(x+1))
 #+ fig.width = 14
-plot_split(realsplit)
+plot_split_mean(realsplit_small)
+plot_split_var(realsplit_small)
 
-#' We can also look what happens if we deplete the library more by performing the first sequencing run. Above the depletion is about 5%, here we will try 25%.
+#' We can also look what happens if we deplete the library more by performing the first equencing run. Above the depletion is about 5%, here we will try 25%.
 #'
 #' To test this, we reduce the original library size to 20 mln molecules, and perform the same sampling as above
 realreads_small = sample(realreads, 2e7)
 realcounts_small = count_reads(realreads_small)
 
-realsplit_small = sim_splitting(realcounts_small, ref = 1e7, splits = c(5e6, 5e6), simno = 100, remove_reads = TRUE)
+realsplit_small = sim_splitting(realcounts_small, ref = 1e7, splits = c(5e6, 5e6), simno = 100, remove_reads = TRUE, quiet = TRUE)
 realsplit_small = lapply(realsplit_small, FUN = function(x) log10(x+1))
 #+ fig.width = 14
-plot_split(realsplit_small)
+plot_split_mean(realsplit_small)
+plot_split_var(realsplit_small)
+
+
+#' Again it does not look like there is a big difference in observed abundances.
+#'

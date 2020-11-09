@@ -14,9 +14,6 @@ simreads = function(nuniq = 10000, n_total = 100000){
   seqs = seqs[1:nuniq]
 
   ns = rnbinom(nuniq, size = 4, mu = 20)
-  ## print(hist(ns))
-  ## print(sum(ns))
-  plot(hist(ns, breaks = 100))
 
   seqs = rep(seqs, times = ns)
 
@@ -211,8 +208,8 @@ sim_splitting = function(counts, ref = 10000, splits = c(5000,5000),
       if (remove_reads){
         counts_temp = counts - splitx[,"count"]
       }
-
     }
+
     df = data.frame(row.names = reads_uniq, count = rowSums(df))
     colnames(df) = paste0("sim_", as.character(i))
     dfsplit = cbind(dfsplit, df)
@@ -220,18 +217,40 @@ sim_splitting = function(counts, ref = 10000, splits = c(5000,5000),
   return(list(ref = dfref, split = dfsplit))
 }
 
-plot_split = function(simsplit){
+plot_split_mean = function(simsplit){
                                         #Generating ref x ref comparison (1/2 of simulations)
   r = simsplit$ref
   simno = ncol(r)
   r1 = r[,1:simno/2]
   r2 = r[,(simno/2):ncol(r)]
-  g1 = ggplot(data.frame(), aes(x = rowMeans(r1), y = rowMeans(r2))) + geom_point(alpha = 0.5)
+  g1 = ggplot(data.frame(), aes(x = rowMeans(r1), y = rowMeans(r2))) + geom_point(alpha = 0.5) + 
+  xlab("Large sample mean log10(counts)") + ylab("Large sample mean log10(counts)")
 
   s = simsplit$split
   s1 = s[,1:simno/2]
-  g2 = ggplot(data.frame(), aes(x = rowMeans(r1), rowMeans(s1))) + geom_point(alpha = 0.5)
+  g2 = ggplot(data.frame(), aes(x = rowMeans(r1), rowMeans(s1))) + geom_point(alpha = 0.5) +
+    xlab("Large sample mean log10(counts)") + ylab("1/2 sample mean log10(counts)")
 
   multiplot(g1, g2, cols = 2)
 
 }
+
+rowVars = function(x) apply(x,1, FUN = var)
+
+plot_split_var = function(simsplit){
+                                        #Generating ref x ref comparison (1/2 of simulations)
+  r = simsplit$ref
+  simno = ncol(r)
+  r1 = r[,1:simno/2]
+  r2 = r[,(simno/2):ncol(r)]
+  g1 = ggplot(data.frame(), aes(x = rowVars(r1), y = rowVars(r2))) + geom_point(alpha = 0.5) + 
+  xlab("Large sample variance log10(counts)") + ylab("Large sample variance log10(counts)")
+
+  s = simsplit$split
+  s1 = s[,1:simno/2]
+  g2 = ggplot(data.frame(), aes(x = rowVars(r1), rowVars(s1))) + geom_point(alpha = 0.5) +
+    xlab("Large sample variance log10(counts)") + ylab("1/2 sample variance log10(counts)")
+
+  multiplot(g1, g2, cols = 2)
+  }
+
