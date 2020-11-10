@@ -42,23 +42,19 @@ plot(apply(x1, 1, mean), apply(x2, 1, mean))
 #' It looks like the estimated abundances are very similar, and the observed variance between pooled and large samples is not greater than comparison of two independent large samples.
 #'
 #' It seems that the empirical test confirms the intuition, but this is a bit simplistic approach.
-#' In reality we start with a large library from which we take aliquots, potentially reducing the complexity of the sample. For reference 20µl of a 15nM (about 100ng of 500bp molecules) library contains around 2*10^11 molecules. A typical run on NovaSeq or HiSeq will consume...
-#' So each sequencing runs consumes a ... fraction of the library
+#' In reality we start with a large library from which we take aliquots, potentially reducing the complexity of the sample. For reference 20µl of a 15nM (about 100ng of 500bp molecules) library contains around 2*10^11 molecules. Getting 500 mln reads on NovaSeq/HiSeq would consume only a fraction of such library.
+#' 
 #' 
 #' Additionally the distribution of fragments are highly skewed, with a small number of highly abundant ones and plenty of very low abundant fragments. Which may be relevant in situation where the complexity of the library is reduced by the first run.
 
 
 #' ## Real world scenario
 #' ### Loading real-world read distribution
-#' In order to have a distribution of fragments approximating real libraries I load an example of RNA-seq data. These are counts per genes, which tell us the number of copies in the mixture mapping to each genes. We can operate on these gene-level estimates onwards.
-realreads = fread('../sc5v3/procdata/TFnet_counts_QC.csv')
-realreads = as.data.frame(realreads)
-row.names(realreads) = realreads$V1
-realreads = realreads[,-1]
-realreads = realreads[,1:100]
-realreads = rowSums(realreads)
+#' In order to have a distribution of fragments approximating real libraries I load an example of RNA-seq data (a pool of 100 RNA-Seq samples). These are counts per genes, which tell us the number of copies in the mixture mapping to each gene. We can operate on these gene-level estimates onwards.
+realreads = read.csv('./data/RNA_pooled_sample.csv', row.names =1)
+
 #' Converting the counts into a vector with reads
-realreads = rep(names(realreads), times = realreads)
+realreads = rep(row.names(realreads), times = realreads$x)
 #' Taking 10^8 reads
 realreads = sample(realreads, 1e8)
 #' Generating counts again
@@ -69,10 +65,15 @@ sum(realcounts$count)
 #' ### Simulating library splitting
 
 #' Finally we can test a scenario mimicking a real sequencing experiment.
+#' 
 #' 1. We start with a library with 100 mln mln reads (reflecting molecules in a library).
+#' 
 #' 2. We then simulate sampling 10 mln reads from that library.
-#' 3. Finally, we do a two-step sampling. First we sample 5mln reads, remove those reads from the original library (removing around 5% of the library molecules) and sample again 5mln reads, followed by pooling of the two small samples.
+#' 
+#' 3. We do a two-step sampling. First we sample 5mln reads, remove those reads from the original library (removing 5% of the library molecules) and sample again 5mln reads, followed by pooling of the two small samples.
+#' 
 #' 4. Finally we repeat the process 100 times to get an estimation for the mean abundance (note: each simulation starts with a fresh, non-depleted library).
+#' 
 
 ## #' Small test sample
 ## counts = count_reads(reads)
@@ -85,8 +86,8 @@ sum(realcounts$count)
 realsplit = sim_splitting(realcounts, ref = 1e7, splits = c(5e6, 5e6), simno = 100, remove_reads = TRUE)
 realsplit = lapply(realsplit, FUN = function(x) log10(x+1))
 #+ fig.width = 14
-plot_split_mean(realsplit_small)
-plot_split_var(realsplit_small)
+plot_split_mean(realsplit)
+plot_split_var(realsplit)
 
 #' We can also look what happens if we deplete the library more by performing the first equencing run. Above the depletion is about 5%, here we will try 25%.
 #'
@@ -102,4 +103,3 @@ plot_split_var(realsplit_small)
 
 
 #' Again it does not look like there is a big difference in observed abundances.
-#'
